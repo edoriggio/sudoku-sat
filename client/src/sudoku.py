@@ -2,7 +2,6 @@ import os
 import shutil
 from math import sqrt
 from subprocess import Popen, PIPE
-import sys
 
 # Constants for game
 ROWS = 9
@@ -37,7 +36,7 @@ def gen_vars():
     return var_map, var_to_vals, next_var - 1
 
 
-def set_constraints(variables, file_name=None):
+def set_constraints(variables, input_file=None):
     clauses = []
 
     # Every cell has at least one number
@@ -75,13 +74,14 @@ def set_constraints(variables, file_name=None):
                 clauses.append(clause)
 
     # Every line in the input file
-    if file_name:
-        f = open(file_name, 'r')
+    if input_file:
 
-        for line in f.readlines():
-            row = line[1]
-            col = line[4]
-            n = line[7]
+        file_clauses = input_file.split('\n')
+        for clause in file_clauses:
+            clause = clause.split(',')
+            row = int(clause[0]) - 1
+            col = int(clause[1]) - 1
+            n = clause[2]
             clauses.append([variables[var_name(row, col, n)]])
 
     return clauses
@@ -110,14 +110,14 @@ def get_clauses(cls):
     return '\n'.join(map(lambda x: '%s 0' % ' '.join(map(str, x)), cls))
 
 
-def solve():
+def solve(input_file=None):
     mat = []
     variables, var_to_vals, var_count = gen_vars()
 
-    # if len(sys.argv) > 1:
-    #     final_clauses = set_constraints(variables, sys.argv[1])
-    # else:
-    final_clauses = set_constraints(variables)
+    if input_file:
+        final_clauses = set_constraints(variables, input_file)
+    else:
+        final_clauses = set_constraints(variables)
 
     header = get_header(var_count, len(final_clauses))
     rules = get_clauses(final_clauses)

@@ -8,6 +8,7 @@
     <style>
         html, body {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             margin: 0;
@@ -52,6 +53,12 @@
             width: calc(100% - 8px);
             height: calc(100% - 8px);
         }
+
+        #button-send {
+            z-index: 1000;
+            margin-top: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -59,51 +66,84 @@
     <table class="sudoku-grid">
         {% for col in sol_matrix %}
             <tr class="sudoku-row">
+                {% with loop_1=forloop.counter0 %}
                 {% for el in col %}
-                    <td class="sudoku-cell">{{ el }}</td>
+                    <td id="{{ loop_1 }},{{ forloop.counter0 }}" class="sudoku-cell">{{ el }}</td>
                 {% endfor %}
+                {% endwith %}
             </tr>
         {% endfor %}
     </table>
+
+    <button id="button-send" onclick="buttonCallback()">Solve</button>
 
     <div id="drop-zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);" ondragleave="dragLeaveHandler()">
         <div id="drop-zone_inner"> </div>
     </div>
 
+    {% csrf_token %}
     <script>
-        async function dropHandler(ev) {
+        let file = null
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+
+        function buttonCallback() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", 'solve', true);
+            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+            xhr.send(file);
+            xhr.addEventListener("load", transferComplete);
+        }
+
+        function dropHandler(ev) {
             ev.preventDefault()
 
             if (ev.dataTransfer.items.length > 1) {
                 alert('Only one file can be uploaded at a time.')
 
                 document.getElementById('drop-zone').style.borderColor = "transparent"
-                document.querySelector('#drop-zone p').style.color = "transparent"
             } else if (ev.dataTransfer.items[0].getAsFile().type !== 'text/plain') {
                 alert('File must be TXT.')
 
                 document.getElementById('drop-zone').style.borderColor = "transparent"
-                document.querySelector('#drop-zone p').style.color = "transparent"
-            } else if (document.getElementById("select").value === 'Select Platform' || document.getElementById("select-op").value === 'Select Operation') {
-                alert('You must select a type of platform and operation first.')
+            } else {
+                file = ev.dataTransfer.items[0].getAsFile()
+
+                file.text().then((res) => {
+                    let pos = []
+                    let parsed_res = res.split("\n")
+                    let cells = document.getElementsByClassName("sudoku-cell")
+
+                    for (let cell in cells) {
+                        cells[cell].innerHTML = " "
+                    }
+
+                    for (let element in parsed_res) {
+                        let split = parsed_res[element].split(",")
+
+                        let x = split[0]
+                        let y = split[1]
+                        let n = split[2]
+
+                        pos.push([parseInt(x)-1,parseInt(y)-1, parseInt(n)])
+                    }
+
+                    for (let element in pos) {
+                        document.getElementById(`${pos[element][0]},${pos[element][1]}`).innerHTML = pos[element][2]
+                        document.getElementById(`${pos[element][0]},${pos[element][1]}`).style.backgroundColor = "lightgray"
+                    }
+                })
 
                 document.getElementById('drop-zone').style.borderColor = "transparent"
-                document.querySelector('#drop-zone p').style.color = "transparent"
-            } else {
-                document.getElementById('spinner').hidden = false
+            }
+        }
 
-                let file = await ev.dataTransfer.items[0].getAsFile().text()
-                file = JSON.parse(file)
-                file.platform = `${document.getElementById("select").value}`
+        function transferComplete() {
+            let solution = JSON.parse(this.responseText)["sol_matrix"]
 
-                document.querySelector('#drop-zone p').innerHTML = `${file.name} uploaded`
-
-                {#let xhr = new XMLHttpRequest();#}
-                {#xhr.open("POST", `/api/${document.getElementById("select-op").value}/`, true);#}
-                {#xhr.setRequestHeader('Content-Type', 'application/json');#}
-                {#xhr.send(JSON.stringify(file));#}
-                {#xhr.addEventListener("load", transferComplete);#}
-                {#xhr.addEventListener("error", transferFailed);#}
+            for (let i = 0; i < solution.length; i++) {
+                for (let j = 0; j < solution[i].length; j++) {
+                    document.getElementById(`${i},${j}`).innerHTML = solution[i][j]
+                }
             }
         }
 
@@ -111,12 +151,10 @@
             ev.preventDefault();
 
             document.getElementById('drop-zone').style.borderColor = "#0B6EFD"
-            document.querySelector('#drop-zone p').style.color = "#0B6EFD"
         }
 
         function dragLeaveHandler() {
             document.getElementById('drop-zone').style.borderColor = "transparent"
-            document.querySelector('#drop-zone p').style.color = "transparent"
         }
     </script>
 </body>
