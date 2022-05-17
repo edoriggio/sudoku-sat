@@ -2,7 +2,7 @@ import os
 import shutil
 from math import sqrt
 from subprocess import Popen, PIPE
-
+import sys
 
 # Constants for game
 ROWS = 9
@@ -37,7 +37,7 @@ def gen_vars():
     return var_map, var_to_vals, next_var - 1
 
 
-def set_constraints(variables):
+def set_constraints(variables, file_name=None):
     clauses = []
 
     # Every cell has at least one number
@@ -73,6 +73,17 @@ def set_constraints(variables):
                     for col in range(SQUARE_SIDE):
                         clause.append(variables[var_name(3 * square_1 + row, 3 * square_2 + col, n)])
                 clauses.append(clause)
+
+    # Every line in the input file
+    if file_name:
+        f = open(file_name, 'r')
+
+        for line in f.readlines():
+            row = line[1]
+            col = line[4]
+            n = line[7]
+            clauses.append([variables[var_name(row, col, n)]])
+
     return clauses
 
 
@@ -102,6 +113,10 @@ def get_clauses(cls):
 def solve():
     mat = []
     variables, var_to_vals, var_count = gen_vars()
+
+    # if len(sys.argv) > 1:
+    #     final_clauses = set_constraints(variables, sys.argv[1])
+    # else:
     final_clauses = set_constraints(variables)
 
     header = get_header(var_count, len(final_clauses))
