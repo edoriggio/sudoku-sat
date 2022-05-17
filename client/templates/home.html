@@ -14,6 +14,7 @@
             margin: 0;
             width: 100%;
             height: 100%;
+            color: transparent;
         }
 
         .sudoku-grid {
@@ -23,25 +24,25 @@
         .sudoku-cell {
             height: 30px;
             width: 30px;
-            border: 1px solid;
+            border: 1px solid black;
             text-align: center;
             font-size: 18px;
         }
 
         .sudoku-cell:nth-child(1) {
-            border-left: 3px solid;
+            border-left: 3px solid black;
         }
 
         .sudoku-row:nth-child(1) {
-            border-top: 3px solid;
+            border-top: 3px solid black;
         }
 
         .sudoku-cell:nth-child(3n) {
-            border-right: 3px solid;
+            border-right: 3px solid black;
         }
 
         .sudoku-row:nth-child(3n) {
-            border-bottom: 3px solid;
+            border-bottom: 3px solid black;
         }
 
         #drop-zone {
@@ -130,6 +131,7 @@
                     for (let element in pos) {
                         document.getElementById(`${pos[element][0]},${pos[element][1]}`).innerHTML = pos[element][2]
                         document.getElementById(`${pos[element][0]},${pos[element][1]}`).style.backgroundColor = "lightgray"
+                        document.getElementById(`${pos[element][0]},${pos[element][1]}`).style.color = 'black'
                     }
                 })
 
@@ -145,6 +147,8 @@
                     document.getElementById(`${i},${j}`).innerHTML = solution[i][j]
                 }
             }
+
+            animateNumbers()
         }
 
         function dragOverHandler(ev) {
@@ -156,6 +160,29 @@
         function dragLeaveHandler() {
             document.getElementById('drop-zone').style.borderColor = "transparent"
         }
+
+        function animateNumbers() {
+            let cells = []
+
+            for (let i = 0; i < 81; i++) {
+                cells.push(i)
+            }
+
+            let currentIndex = cells.length;
+            while (currentIndex !== 0) {
+                let randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+
+                [cells[currentIndex], cells[randomIndex]] = [cells[randomIndex], cells[currentIndex]];
+            }
+
+            let table_cells = document.getElementsByTagName('td')
+            for (let i = 0; i < table_cells.length; i++) {
+                setTimeout(() => { table_cells[cells[i]].style.color = 'black'}, 20 * i);
+            }
+        }
+
+
     </script>
 </body>
 </html>
