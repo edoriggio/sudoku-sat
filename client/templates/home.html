@@ -1,10 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Sudoku Solver</title>
-</head>
-<body>
 
+    <style>
+        html, body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sudoku-grid {
+            border-collapse: collapse;
+        }
+
+        .sudoku-cell {
+            height: 30px;
+            width: 30px;
+            border: 1px solid;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .sudoku-cell:nth-child(1) {
+            border-left: 3px solid;
+        }
+
+        .sudoku-row:nth-child(1) {
+            border-top: 3px solid;
+        }
+
+        .sudoku-cell:nth-child(3n) {
+            border-right: 3px solid;
+        }
+
+        .sudoku-row:nth-child(3n) {
+            border-bottom: 3px solid;
+        }
+
+        #drop-zone {
+            display: flex;
+            margin: 0;
+            justify-content: center;
+            border: 3px dashed transparent;
+            position: absolute;
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
+        }
+    </style>
+</head>
+
+<body>
+    <table class="sudoku-grid">
+        {% for col in sol_matrix %}
+            <tr class="sudoku-row">
+                {% for el in col %}
+                    <td class="sudoku-cell">{{ el }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+
+    <div id="drop-zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);" ondragleave="dragLeaveHandler()">
+        <div id="drop-zone_inner"> </div>
+    </div>
+
+    <script>
+        async function dropHandler(ev) {
+            ev.preventDefault()
+
+            if (ev.dataTransfer.items.length > 1) {
+                alert('Only one file can be uploaded at a time.')
+
+                document.getElementById('drop-zone').style.borderColor = "transparent"
+                document.querySelector('#drop-zone p').style.color = "transparent"
+            } else if (ev.dataTransfer.items[0].getAsFile().type !== 'text/plain') {
+                alert('File must be TXT.')
+
+                document.getElementById('drop-zone').style.borderColor = "transparent"
+                document.querySelector('#drop-zone p').style.color = "transparent"
+            } else if (document.getElementById("select").value === 'Select Platform' || document.getElementById("select-op").value === 'Select Operation') {
+                alert('You must select a type of platform and operation first.')
+
+                document.getElementById('drop-zone').style.borderColor = "transparent"
+                document.querySelector('#drop-zone p').style.color = "transparent"
+            } else {
+                document.getElementById('spinner').hidden = false
+
+                let file = await ev.dataTransfer.items[0].getAsFile().text()
+                file = JSON.parse(file)
+                file.platform = `${document.getElementById("select").value}`
+
+                document.querySelector('#drop-zone p').innerHTML = `${file.name} uploaded`
+
+                {#let xhr = new XMLHttpRequest();#}
+                {#xhr.open("POST", `/api/${document.getElementById("select-op").value}/`, true);#}
+                {#xhr.setRequestHeader('Content-Type', 'application/json');#}
+                {#xhr.send(JSON.stringify(file));#}
+                {#xhr.addEventListener("load", transferComplete);#}
+                {#xhr.addEventListener("error", transferFailed);#}
+            }
+        }
+
+        function dragOverHandler(ev) {
+            ev.preventDefault();
+
+            document.getElementById('drop-zone').style.borderColor = "#0B6EFD"
+            document.querySelector('#drop-zone p').style.color = "#0B6EFD"
+        }
+
+        function dragLeaveHandler() {
+            document.getElementById('drop-zone').style.borderColor = "transparent"
+            document.querySelector('#drop-zone p').style.color = "transparent"
+        }
+    </script>
 </body>
 </html>

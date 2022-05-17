@@ -1,3 +1,5 @@
+import os
+import shutil
 from math import sqrt
 from subprocess import Popen, PIPE
 
@@ -10,7 +12,7 @@ SQUARE_SIDE = int(sqrt(ROWS))
 
 
 def var_name(row, col, n):
-    return f"{n} at row {row} and col {col}"
+    return f'{n} at row {row} and col {col}'
 
 
 def gen_vars():
@@ -90,45 +92,42 @@ def print_matrix(matrix):
 
 
 def get_header(variables, clauses):
-    return "p cnf {} {}".format(variables, clauses)
+    return 'p cnf {} {}'.format(variables, clauses)
 
 
 def get_clauses(cls):
-    return "\n".join(map(lambda x: "%s 0" % " ".join(map(str, x)), cls))
+    return '\n'.join(map(lambda x: '%s 0' % ' '.join(map(str, x)), cls))
 
 
-if __name__ == '__main__':
-    variables, varToVals, var_count = gen_vars()
+def solve():
+    mat = []
+    variables, var_to_vals, var_count = gen_vars()
     final_clauses = set_constraints(variables)
-    
+
     header = get_header(var_count, len(final_clauses))
     rules = get_clauses(final_clauses)
 
-    fl = open("tmp_prob_sudoku.cnf", "w")
-    fl.write("\n".join([header, rules]))
-    fl.close()
+    os.mkdir(os.path.join(os.path.dirname(__file__), '../tmp'))
+    with open(os.path.join(os.path.dirname(__file__), '../tmp/tmp_prob_sudoku.cnf'), 'x') as file:
+        file.write('\n'.join([header, rules]))
 
-    ms_out = Popen(["z3 tmp_prob_sudoku.cnf"], stdout=PIPE, shell=True).communicate()[0]
+    ms_out = Popen(['z3 ./client/tmp/tmp_prob_sudoku.cnf'], stdout=PIPE, shell=True).communicate()[0]
+    shutil.rmtree(os.path.join(os.path.dirname(__file__), '../tmp'), ignore_errors=True)
 
     res = ms_out.decode('utf-8')
-    # Print output
     res = res.strip().split('\n')
-
-    # Print the variables that are necessary to satisfy the problem
-    mat = []
 
     for row in range(ROWS):
         mat.append([0] * ROWS)
 
-    if res[0] == "s SATISFIABLE":
+    if res[0][2:] == 'SATISFIABLE':
         sat_vars = res[1][2:].split(' ')
 
         for c in sat_vars:
             c_int = int(c)
 
             if c_int > 0:
-                element = varToVals[c_int]
+                element = var_to_vals[c_int]
                 mat[element[0]][element[1]] = element[2]
 
-    print_matrix(mat)
-
+    return mat

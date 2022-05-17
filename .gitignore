@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 .idea
+tmp_prob_sudoku.cnf
 
 # C extensions
 *.so
