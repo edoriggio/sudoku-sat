@@ -102,6 +102,49 @@ def print_matrix(matrix):
             print(''.join(['-' for _ in range(21)]))
 
 
+def check_solution(mat):
+    checks = []
+    # check rows
+    for i in range(9):
+        r_set = set()
+        for j in range(9):
+            r_set.add(mat[i][j])
+            checks.append((i,j))
+
+        for n in range(1,10):
+            if n not in r_set:
+                return checks, False
+    
+    # check columns
+    for j in range(9):
+        c_set = set()
+        for i in range(9):
+            c_set.add(mat[i][j])
+            checks.append((i,j))
+
+        for n in range(1,10):
+            if n not in c_set:
+                return checks, False
+
+    #check boxes
+    for b1 in range(3):
+        for b2 in range(3):
+            b_set = set()
+            for i in range(3):
+                for j in range(3):
+                    b_set.add(mat[3*b1 + i][3*b2 + j])
+                    checks.append((3*b1 + i, 3*b2 + j))
+                    # print(3*b1 + i, 3*b2 + j)
+            for n in range(1,10):
+                if n not in b_set:
+                    return checks, False
+    
+    return checks, True
+
+            
+
+
+
 def get_header(variables, clauses):
     return 'p cnf {} {}'.format(variables, clauses)
 
