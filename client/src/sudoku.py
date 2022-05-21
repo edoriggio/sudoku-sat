@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 from math import sqrt
 from subprocess import Popen, PIPE
@@ -75,8 +76,8 @@ def set_constraints(variables, input_file=None):
 
     # Every line in the input file
     if input_file:
-
         file_clauses = input_file.split('\n')
+
         for clause in file_clauses:
             clause = clause.split(',')
             row = int(clause[0]) - 1
@@ -102,47 +103,49 @@ def print_matrix(matrix):
             print(''.join(['-' for _ in range(21)]))
 
 
-def check_solution(mat):
+def check_solution(matrix):
     checks = []
+    matrix = json.loads(matrix)['check']
+
     # check rows
     for i in range(9):
         r_set = set()
-        for j in range(9):
-            r_set.add(mat[i][j])
-            checks.append((i,j))
 
-        for n in range(1,10):
+        for j in range(9):
+            r_set.add(matrix[i][j])
+            checks.append((i, j))
+
+        for n in range(1, 10):
             if n not in r_set:
                 return checks, False
     
     # check columns
     for j in range(9):
         c_set = set()
-        for i in range(9):
-            c_set.add(mat[i][j])
-            checks.append((i,j))
 
-        for n in range(1,10):
+        for i in range(9):
+            c_set.add(matrix[i][j])
+            checks.append((i, j))
+
+        for n in range(1, 10):
             if n not in c_set:
                 return checks, False
 
-    #check boxes
+    # check boxes
     for b1 in range(3):
         for b2 in range(3):
             b_set = set()
+
             for i in range(3):
                 for j in range(3):
-                    b_set.add(mat[3*b1 + i][3*b2 + j])
-                    checks.append((3*b1 + i, 3*b2 + j))
-                    # print(3*b1 + i, 3*b2 + j)
-            for n in range(1,10):
+                    b_set.add(matrix[3 * b1 + i][3 * b2 + j])
+                    checks.append((3 * b1 + i, 3 * b2 + j))
+
+            for n in range(1, 10):
                 if n not in b_set:
                     return checks, False
     
     return checks, True
-
-            
-
 
 
 def get_header(variables, clauses):
@@ -188,4 +191,6 @@ def solve(input_file=None):
                 element = var_to_vals[c_int]
                 mat[element[0]][element[1]] = element[2]
 
-    return mat
+        return mat
+    else:
+        return False

@@ -55,7 +55,18 @@
             height: calc(100% - 8px);
         }
 
+        .buttons {
+            display: flex;
+            column-gap: 20px;
+        }
+
         #button-send {
+            z-index: 1000;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        #button-check {
             z-index: 1000;
             margin-top: 20px;
             cursor: pointer;
@@ -76,7 +87,10 @@
         {% endfor %}
     </table>
 
-    <button id="button-send" onclick="buttonCallback()">Solve</button>
+    <div class="buttons">
+        <button id="button-send" onclick="buttonCallback()">Solve</button>
+        <button id="button-check" onclick="buttonCallbackCheck()" hidden>Check</button>
+    </div>
 
     <div id="drop-zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);" ondragleave="dragLeaveHandler()">
         <div id="drop-zone_inner"> </div>
@@ -85,27 +99,48 @@
     {% csrf_token %}
     <script>
         let file = null
-        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value
+        let solution_mat = null
+        const csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value
 
         function buttonCallback() {
             let xhr = new XMLHttpRequest();
-            xhr.open("POST", 'solve', true);
-            xhr.setRequestHeader('X-CSRFToken', csrftoken);
+            xhr.open("POST", "solve", true);
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
             xhr.send(file);
             xhr.addEventListener("load", transferComplete);
+            document.getElementById("button-send").disabled = true
+        }
+
+        function buttonCallbackCheck() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", "check", true);
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            xhr.send(`{"check": ${solution_mat}}`);
+            xhr.addEventListener("load", transferCompleteCheck);
+            document.getElementById("button-check").disabled = true
         }
 
         function dropHandler(ev) {
             ev.preventDefault()
 
-            if (ev.dataTransfer.items.length > 1) {
-                alert('Only one file can be uploaded at a time.')
+            for (let el in document.getElementsByClassName("sudoku-cell")) {
+                if (document.getElementsByClassName("sudoku-cell")[parseInt(el)] !== undefined) {
+                    document.getElementsByClassName("sudoku-cell")[parseInt(el)].style.backgroundColor = "white"
+                }
+            }
 
-                document.getElementById('drop-zone').style.borderColor = "transparent"
+            document.getElementById("button-check").hidden = true
+            document.getElementById("button-send").disabled = false
+            document.getElementById("button-check").disabled = false
+
+            if (ev.dataTransfer.items.length > 1) {
+                alert("Only one file can be uploaded at a time.")
+
+                document.getElementById("drop-zone").style.borderColor = "transparent"
             } else if (ev.dataTransfer.items[0].getAsFile().type !== 'text/plain') {
                 alert('File must be TXT.')
 
-                document.getElementById('drop-zone').style.borderColor = "transparent"
+                document.getElementById("drop-zone").style.borderColor = "transparent"
             } else {
                 file = ev.dataTransfer.items[0].getAsFile()
 
@@ -131,34 +166,61 @@
                     for (let element in pos) {
                         document.getElementById(`${pos[element][0]},${pos[element][1]}`).innerHTML = pos[element][2]
                         document.getElementById(`${pos[element][0]},${pos[element][1]}`).style.backgroundColor = "lightgray"
-                        document.getElementById(`${pos[element][0]},${pos[element][1]}`).style.color = 'black'
+                        document.getElementById(`${pos[element][0]},${pos[element][1]}`).style.color = "black"
                     }
                 })
 
-                document.getElementById('drop-zone').style.borderColor = "transparent"
+                document.getElementById("drop-zone").style.borderColor = "transparent"
             }
         }
 
         function transferComplete() {
             let solution = JSON.parse(this.responseText)["sol_matrix"]
+            solution_mat = JSON.stringify(solution)
 
-            for (let i = 0; i < solution.length; i++) {
-                for (let j = 0; j < solution[i].length; j++) {
-                    document.getElementById(`${i},${j}`).innerHTML = solution[i][j]
+            if (solution !== false) {
+                for (let i = 0; i < solution.length; i++) {
+                    for (let j = 0; j < solution[i].length; j++) {
+                        document.getElementById(`${i},${j}`).innerHTML = solution[i][j]
+                    }
                 }
-            }
 
-            animateNumbers()
+                animateNumbers()
+                document.getElementById("button-check").hidden = false
+            } else {
+                alert('The given problem is unsolvable!')
+                window.location.href = '/'
+            }
+        }
+
+        function transferCompleteCheck() {
+            let checked = JSON.parse(this.responseText)["check"]
+
+            if (checked[1]) {
+                animateSolution(checked[0])
+            }
         }
 
         function dragOverHandler(ev) {
             ev.preventDefault();
 
-            document.getElementById('drop-zone').style.borderColor = "#0B6EFD"
+            document.getElementById("drop-zone").style.borderColor = "#0B6EFD"
         }
 
         function dragLeaveHandler() {
-            document.getElementById('drop-zone').style.borderColor = "transparent"
+            document.getElementById("drop-zone").style.borderColor = "transparent"
+        }
+
+        function animateSolution(solution_elements) {
+            for (let pos in solution_elements) {
+                setTimeout(() => {
+                    document.getElementById(`${solution_elements[pos][0]},${solution_elements[pos][1]}`).style.backgroundColor = "orange"
+
+                    setTimeout(() => {
+                        document.getElementById(`${solution_elements[pos][0]},${solution_elements[pos][1]}`).style.backgroundColor = "lightgreen"
+                    }, 30 * 3)
+                }, 30 * pos)
+            }
         }
 
         function animateNumbers() {
@@ -172,17 +234,15 @@
             while (currentIndex !== 0) {
                 let randomIndex = Math.floor(Math.random() * currentIndex);
                 currentIndex--;
-
                 [cells[currentIndex], cells[randomIndex]] = [cells[randomIndex], cells[currentIndex]];
             }
 
-            let table_cells = document.getElementsByTagName('td')
+            let table_cells = document.getElementsByTagName("td")
+
             for (let i = 0; i < table_cells.length; i++) {
-                setTimeout(() => { table_cells[cells[i]].style.color = 'black'}, 20 * i);
+                setTimeout(() => { table_cells[cells[i]].style.color = "black"}, 20 * i);
             }
         }
-
-
     </script>
 </body>
 </html>
