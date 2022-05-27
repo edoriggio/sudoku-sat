@@ -14,6 +14,26 @@ The first number in the line is the $x$ position, the second number is the $y$ p
 
 The user can also check the correctness of a solution. After a solution has been generated, click on the **check** button and watch as the solution is verified.
 
+## Create the environment
+We used a custom Conda environment in order to run the webserver. This environment can be recreated by using the following commands:
+
+```bash
+conda env create -f ./environment.yml
+conda activate sudoku
+```
+
+In order to remove the virtual environment, use the following commands:
+
+```bash
+conda deactivate
+conda remove --name sudoku --all
+```
+
+## Requirements
+The project uses the following additional packages:
+- Django (version 3.2.5)
+- Z3 (version 4.8.16)
+
 ## How to run
 In order to run the webserver, navigate to the root folder of this project and run the following command:
 
