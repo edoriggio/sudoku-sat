@@ -42,3 +42,6 @@ In order to run the webserver, navigate to the root folder of this project and r
 ```
 
 Once te server is up and running, navigate to http://127.0.0.1:8000.
+
+## Presentation
+The presentation for the project is available [here](https://www.figma.com/proto/A1iyZYYQOEPA7FSilQeqrP/Sudoku-SAT-Solver?page-id=0%3A1&node-id=2%3A2&starting-point-node-id=2%3A2).
